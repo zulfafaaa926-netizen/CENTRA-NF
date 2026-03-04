@@ -100,6 +100,53 @@ Last updated: 2026-03-04
 
 ---
 
+## Session 3: Governance Formalization
+
+[2026-03-04]
+
+**Change:**
+- Create `.github/copilot-instructions.md` as canonical governance framework
+- Formalize non-negotiable principles (Fail Fast, Determinism, Zero Global State, Layer Discipline)
+- Document language rules (4 divisions, quoted values, strict order)
+- Codify progress governance workflow (progress_status.md as single source of truth)
+- Establish task workflow (classify → identify → decide → propose → wait → implement → commit)
+- Enumerate test-first requirements and test categories
+- Document quality gates and CI enforcement
+- Create refusal conditions for AI assistants
+- Provide architectural mental model for long-term maintenance
+
+**Scope:**
+- `.github/copilot-instructions.md`: 1,100+ line governance document
+- Replaces implicit governance with formal, auditable rules
+- No code changes (governance only)
+
+**Status:** ✅ COMPLETED
+
+**Content:**
+- Section 1: Non-negotiable principles (4 rules)
+- Section 2: Language rules (division structure, environment, data, procedure)
+- Section 3: Progress governance (single source of truth, forbidden files, update requirements)
+- Section 4: Task workflow (7-step mandatory process)
+- Section 5: Test-first mentality (mandatory requirements, test categories)
+- Section 6: Quality gates (8 CI gates, all mandatory)
+- Section 7: Refusal conditions (10 absolute refusals)
+- Section 8: Response behavior (before/during/after implementation)
+- Section 9: Mental model (what CENTRA-NF is/isn't)
+- Section 10: Architectural snapshot
+- Section 11: Useful references
+
+**Architectural Impact:**
+- Governance is now codified for all future AI work
+- No ambiguity on process discipline
+- Clear escalation path for governance violations
+- Single entrypoint for understanding project rules
+- Enables automated governance verification
+
+**Commits:**
+1. (in progress) chore: formalize governance in .github/copilot-instructions.md
+
+---
+
 ## Pending Work (Awaiting Direction)
 
 ### Priority A — High Value
