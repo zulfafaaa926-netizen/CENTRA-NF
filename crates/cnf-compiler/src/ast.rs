@@ -45,6 +45,9 @@ pub enum DataType {
     AudioWav,
     CsvTable,
     BinaryBlob,
+    JsonObject,
+    XmlDocument,
+    ParquetTable,
 }
 
 impl std::fmt::Display for DataType {
@@ -56,6 +59,9 @@ impl std::fmt::Display for DataType {
             DataType::AudioWav => write!(f, "AUDIO-WAV"),
             DataType::CsvTable => write!(f, "CSV-TABLE"),
             DataType::BinaryBlob => write!(f, "BINARY-BLOB"),
+            DataType::JsonObject => write!(f, "JSON-OBJECT"),
+            DataType::XmlDocument => write!(f, "XML-DOCUMENT"),
+            DataType::ParquetTable => write!(f, "PARQUET-TABLE"),
         }
     }
 }
@@ -84,6 +90,26 @@ pub enum ProcedureStatement {
     Aggregate {
         targets: Vec<String>,
         operation: String,
+    },
+    Convert {
+        target: String,
+        output_type: DataType,
+    },
+    Merge {
+        targets: Vec<String>,
+        output_name: String,
+    },
+    Split {
+        target: String,
+        parts: String,
+    },
+    Validate {
+        target: String,
+        schema: String,
+    },
+    Extract {
+        target: String,
+        path: String,
     },
 }
 

@@ -26,6 +26,26 @@ pub enum Instruction {
         targets: Vec<String>,
         operation: String,
     },
+    Convert {
+        target: String,
+        output_type: String,
+    },
+    Merge {
+        targets: Vec<String>,
+        output_name: String,
+    },
+    Split {
+        target: String,
+        parts: String,
+    },
+    Validate {
+        target: String,
+        schema: String,
+    },
+    Extract {
+        target: String,
+        path: String,
+    },
 }
 
 impl std::fmt::Display for Instruction {
@@ -48,6 +68,27 @@ impl std::fmt::Display for Instruction {
             }
             Instruction::Aggregate { targets, operation } => {
                 write!(f, "AGGREGATE({} AS {})", targets.join(","), operation)
+            }
+            Instruction::Convert {
+                target,
+                output_type,
+            } => {
+                write!(f, "CONVERT({} -> {})", target, output_type)
+            }
+            Instruction::Merge {
+                targets,
+                output_name,
+            } => {
+                write!(f, "MERGE({} INTO {})", targets.join(","), output_name)
+            }
+            Instruction::Split { target, parts } => {
+                write!(f, "SPLIT({} INTO {} PARTS)", target, parts)
+            }
+            Instruction::Validate { target, schema } => {
+                write!(f, "VALIDATE({} AGAINST {})", target, schema)
+            }
+            Instruction::Extract { target, path } => {
+                write!(f, "EXTRACT({} FROM {})", path, target)
             }
         }
     }
@@ -127,6 +168,74 @@ pub fn lower(program: Program) -> Result<Vec<Instruction>, String> {
                 instructions.push(Instruction::Aggregate {
                     targets: targets.clone(),
                     operation: operation.clone(),
+                });
+            }
+            ProcedureStatement::Convert {
+                target,
+                output_type,
+            } => {
+                if !declared_vars.contains(target) {
+                    return Err(format!(
+                        "Variable '{}' not declared in DATA DIVISION",
+                        target
+                    ));
+                }
+                instructions.push(Instruction::Convert {
+                    target: target.clone(),
+                    output_type: output_type.to_string(),
+                });
+            }
+            ProcedureStatement::Merge {
+                targets,
+                output_name,
+            } => {
+                for target in targets {
+                    if !declared_vars.contains(target) {
+                        return Err(format!(
+                            "Variable '{}' not declared in DATA DIVISION",
+                            target
+                        ));
+                    }
+                }
+                instructions.push(Instruction::Merge {
+                    targets: targets.clone(),
+                    output_name: output_name.clone(),
+                });
+            }
+            ProcedureStatement::Split { target, parts } => {
+                if !declared_vars.contains(target) {
+                    return Err(format!(
+                        "Variable '{}' not declared in DATA DIVISION",
+                        target
+                    ));
+                }
+                instructions.push(Instruction::Split {
+                    target: target.clone(),
+                    parts: parts.clone(),
+                });
+            }
+            ProcedureStatement::Validate { target, schema } => {
+                if !declared_vars.contains(target) {
+                    return Err(format!(
+                        "Variable '{}' not declared in DATA DIVISION",
+                        target
+                    ));
+                }
+                instructions.push(Instruction::Validate {
+                    target: target.clone(),
+                    schema: schema.clone(),
+                });
+            }
+            ProcedureStatement::Extract { target, path } => {
+                if !declared_vars.contains(target) {
+                    return Err(format!(
+                        "Variable '{}' not declared in DATA DIVISION",
+                        target
+                    ));
+                }
+                instructions.push(Instruction::Extract {
+                    target: target.clone(),
+                    path: path.clone(),
                 });
             }
         }

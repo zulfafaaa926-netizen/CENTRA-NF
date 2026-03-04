@@ -327,4 +327,228 @@ mod integration_tests {
         assert_eq!(ir1, ir2, "IR must be identical on repeated compilation");
         assert!(ir1.len() > 0, "Should generate non-empty IR");
     }
+
+    // === Extended Operations Tests (CONVERT, MERGE, SPLIT, VALIDATE, EXTRACT) ===
+
+    #[test]
+    fn test_convert_operation_with_json() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. ConvertTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT CSV-TABLE.
+            PROCEDURE DIVISION.
+                CONVERT CSV-TABLE JSON-OBJECT.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "CONVERT operation should compile");
+        let ir = result.unwrap();
+        assert!(ir.iter().any(|instr| instr.to_string().contains("CONVERT")));
+    }
+
+    #[test]
+    fn test_merge_operation() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. MergeTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+                OUTPUT XML-DOCUMENT.
+            PROCEDURE DIVISION.
+                MERGE JSON-OBJECT merged.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "MERGE operation should compile");
+        let ir = result.unwrap();
+        assert!(ir.iter().any(|instr| instr.to_string().contains("MERGE")));
+    }
+
+    #[test]
+    fn test_split_operation() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. SplitTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT PARQUET-TABLE.
+            PROCEDURE DIVISION.
+                SPLIT PARQUET-TABLE 4.
+        "#;
+
+        let result = compile(source);
+        if result.is_err() {
+            eprintln!("Error: {}", result.clone().unwrap_err());
+        }
+        assert!(result.is_ok(), "SPLIT operation should compile");
+        let ir = result.unwrap();
+        assert!(ir.iter().any(|instr| instr.to_string().contains("SPLIT")));
+    }
+
+    #[test]
+    fn test_validate_operation() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. ValidateTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+            PROCEDURE DIVISION.
+                VALIDATE JSON-OBJECT schema.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "VALIDATE operation should compile");
+        let ir = result.unwrap();
+        assert!(ir
+            .iter()
+            .any(|instr| instr.to_string().contains("VALIDATE")));
+    }
+
+    #[test]
+    fn test_extract_operation() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. ExtractTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+            PROCEDURE DIVISION.
+                EXTRACT jsonpath JSON-OBJECT.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "EXTRACT operation should compile");
+        let ir = result.unwrap();
+        assert!(ir.iter().any(|instr| instr.to_string().contains("EXTRACT")));
+    }
+
+    // === New Data Types Recognition Tests ===
+
+    #[test]
+    fn test_json_object_data_type() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. JsonTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+            PROCEDURE DIVISION.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "JSON-OBJECT type should be recognized");
+    }
+
+    #[test]
+    fn test_xml_document_data_type() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. XmlTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                OUTPUT XML-DOCUMENT.
+            PROCEDURE DIVISION.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "XML-DOCUMENT type should be recognized");
+    }
+
+    #[test]
+    fn test_parquet_table_data_type() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. ParquetTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT PARQUET-TABLE.
+            PROCEDURE DIVISION.
+        "#;
+
+        let result = compile(source);
+        assert!(result.is_ok(), "PARQUET-TABLE type should be recognized");
+    }
+
+    // === Negative Tests for Extended Operations ===
+
+    #[test]
+    fn test_convert_with_undeclared_variable() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. BadConvert.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+            PROCEDURE DIVISION.
+                CONVERT UNDECLARED2 XML-DOCUMENT.
+        "#;
+
+        let result = compile(source);
+        assert!(
+            result.is_err(),
+            "Should reject convert with undeclared variable"
+        );
+    }
+
+    #[test]
+    fn test_extract_with_undeclared_variable() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. BadExtract.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+            PROCEDURE DIVISION.
+                EXTRACT path UNDECLARED3.
+        "#;
+
+        let result = compile(source);
+        assert!(
+            result.is_err(),
+            "Should reject extract with undeclared variable"
+        );
+    }
+
+    // === Extended Determinism Test ===
+
+    #[test]
+    fn test_extended_operations_determinism() {
+        let source = r#"
+            IDENTIFICATION DIVISION.
+                PROGRAM-ID. ExtendedDetermTest.
+            ENVIRONMENT DIVISION.
+                OS "Linux".
+            DATA DIVISION.
+                INPUT JSON-OBJECT.
+                OUTPUT XML-DOCUMENT.
+            PROCEDURE DIVISION.
+                CONVERT JSON-OBJECT XML-DOCUMENT.
+                MERGE JSON-OBJECT merged.
+                VALIDATE JSON-OBJECT schema.
+                EXTRACT jsonpath JSON-OBJECT.
+        "#;
+
+        let ir1 = compile(source).expect("First compile should succeed");
+        let ir2 = compile(source).expect("Second compile should succeed");
+
+        assert_eq!(
+            ir1, ir2,
+            "Extended operations IR must be identical on repeated compilation"
+        );
+        assert!(ir1.len() >= 4, "Should generate multiple instructions");
+    }
 }

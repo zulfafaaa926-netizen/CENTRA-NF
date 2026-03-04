@@ -100,6 +100,18 @@ impl Parser {
                 self.advance();
                 Ok(DataType::BinaryBlob)
             }
+            Token::JsonObject => {
+                self.advance();
+                Ok(DataType::JsonObject)
+            }
+            Token::XmlDocument => {
+                self.advance();
+                Ok(DataType::XmlDocument)
+            }
+            Token::ParquetTable => {
+                self.advance();
+                Ok(DataType::ParquetTable)
+            }
             _ => Err(format!("Expected data type, got {}", self.current())),
         }
     }
@@ -134,6 +146,18 @@ impl Parser {
             Token::BinaryBlob => {
                 self.advance();
                 Ok("BINARY-BLOB".to_string())
+            }
+            Token::JsonObject => {
+                self.advance();
+                Ok("JSON-OBJECT".to_string())
+            }
+            Token::XmlDocument => {
+                self.advance();
+                Ok("XML-DOCUMENT".to_string())
+            }
+            Token::ParquetTable => {
+                self.advance();
+                Ok("PARQUET-TABLE".to_string())
             }
             _ => Err(format!(
                 "Expected variable name or type, got {}",
@@ -262,6 +286,18 @@ impl Parser {
                             self.advance();
                             DataType::BinaryBlob
                         }
+                        Token::JsonObject => {
+                            self.advance();
+                            DataType::JsonObject
+                        }
+                        Token::XmlDocument => {
+                            self.advance();
+                            DataType::XmlDocument
+                        }
+                        Token::ParquetTable => {
+                            self.advance();
+                            DataType::ParquetTable
+                        }
                         _ => {
                             return Err(format!("Expected data type, got {}", self.current()));
                         }
@@ -277,6 +313,9 @@ impl Parser {
                         DataType::AudioWav => "AUDIO-WAV".to_string(),
                         DataType::CsvTable => "CSV-TABLE".to_string(),
                         DataType::BinaryBlob => "BINARY-BLOB".to_string(),
+                        DataType::JsonObject => "JSON-OBJECT".to_string(),
+                        DataType::XmlDocument => "XML-DOCUMENT".to_string(),
+                        DataType::ParquetTable => "PARQUET-TABLE".to_string(),
                     };
 
                     variables.push(Variable { name, data_type });
@@ -340,6 +379,47 @@ impl Parser {
                     let operation = self.expect_identifier()?;
                     self.expect(Token::Period)?;
                     ProcedureStatement::Aggregate { targets, operation }
+                }
+                Token::Convert => {
+                    self.advance();
+                    let target = self.expect_variable_or_type()?;
+                    let output_type = self.parse_data_type()?;
+                    self.expect(Token::Period)?;
+                    ProcedureStatement::Convert {
+                        target,
+                        output_type,
+                    }
+                }
+                Token::Merge => {
+                    self.advance();
+                    let targets = vec![self.expect_variable_or_type()?];
+                    let output_name = self.expect_identifier()?;
+                    self.expect(Token::Period)?;
+                    ProcedureStatement::Merge {
+                        targets,
+                        output_name,
+                    }
+                }
+                Token::Split => {
+                    self.advance();
+                    let target = self.expect_variable_or_type()?;
+                    let parts = self.expect_identifier()?;
+                    self.expect(Token::Period)?;
+                    ProcedureStatement::Split { target, parts }
+                }
+                Token::Validate => {
+                    self.advance();
+                    let target = self.expect_variable_or_type()?;
+                    let schema = self.expect_identifier()?;
+                    self.expect(Token::Period)?;
+                    ProcedureStatement::Validate { target, schema }
+                }
+                Token::Extract => {
+                    self.advance();
+                    let path = self.expect_identifier()?;
+                    let target = self.expect_variable_or_type()?;
+                    self.expect(Token::Period)?;
+                    ProcedureStatement::Extract { target, path }
                 }
                 Token::Eof => break,
                 _ => {

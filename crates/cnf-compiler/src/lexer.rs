@@ -28,6 +28,11 @@ pub enum Token {
     Transcode,
     Filter,
     Aggregate,
+    Convert,
+    Merge,
+    Split,
+    Validate,
+    Extract,
 
     // Data types
     VideoMp4,
@@ -36,6 +41,9 @@ pub enum Token {
     AudioWav,
     CsvTable,
     BinaryBlob,
+    JsonObject,
+    XmlDocument,
+    ParquetTable,
 
     // Literals and punctuation
     Identifier(String),
@@ -116,8 +124,8 @@ pub fn tokenize(source: &str) -> Result<Vec<Token>, String> {
                 tokens.push(Token::String(string_val));
             }
 
-            // Identifiers and keywords
-            'A'..='Z' | 'a'..='z' | '_' => {
+            // Identifiers and keywords (can include numbers like in "4" for SPLIT 4)
+            'A'..='Z' | 'a'..='z' | '_' | '0'..='9' => {
                 let mut ident = String::new();
                 while let Some(&c) = chars.peek() {
                     match c {
@@ -169,12 +177,20 @@ fn keyword_to_token(s: &str) -> Token {
         "TRANSCODE" => Token::Transcode,
         "FILTER" => Token::Filter,
         "AGGREGATE" => Token::Aggregate,
+        "CONVERT" => Token::Convert,
+        "MERGE" => Token::Merge,
+        "SPLIT" => Token::Split,
+        "VALIDATE" => Token::Validate,
+        "EXTRACT" => Token::Extract,
         "VIDEO-MP4" => Token::VideoMp4,
         "IMAGE-JPG" => Token::ImageJpg,
         "FINANCIAL-DECIMAL" => Token::FinancialDecimal,
         "AUDIO-WAV" => Token::AudioWav,
         "CSV-TABLE" => Token::CsvTable,
         "BINARY-BLOB" => Token::BinaryBlob,
+        "JSON-OBJECT" => Token::JsonObject,
+        "XML-DOCUMENT" => Token::XmlDocument,
+        "PARQUET-TABLE" => Token::ParquetTable,
         _ => Token::Identifier(s.to_string()),
     }
 }
