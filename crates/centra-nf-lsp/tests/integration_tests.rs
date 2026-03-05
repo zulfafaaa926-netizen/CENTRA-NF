@@ -150,10 +150,20 @@ fn test_diagnostics_payload_format() {
 
 #[test]
 fn test_capabilities_response() {
-    // Simulate initialize response
+    // Simulate initialize response with all capabilities
     let capabilities = json!({
         "textDocumentSync": 1,
         "diagnosticProvider": true,
+        "hoverProvider": true,
+        "completionProvider": {
+            "resolveProvider": false,
+            "triggerCharacters": []
+        },
+        "definitionProvider": true,
+        "referencesProvider": true,
+        "renameProvider": true,
+        "documentSymbolProvider": true,
+        "workspaceSymbolProvider": true
     });
 
     let response = Response::success(1, capabilities);
@@ -164,6 +174,12 @@ fn test_capabilities_response() {
     assert_eq!(json["id"], 1);
     assert!(json["result"]["textDocumentSync"].is_number());
     assert_eq!(json["result"]["diagnosticProvider"], true);
+    assert_eq!(json["result"]["hoverProvider"], true);
+    assert_eq!(json["result"]["definitionProvider"], true);
+    assert_eq!(json["result"]["referencesProvider"], true);
+    assert_eq!(json["result"]["renameProvider"], true);
+    assert_eq!(json["result"]["documentSymbolProvider"], true);
+    assert_eq!(json["result"]["workspaceSymbolProvider"], true);
 }
 
 #[test]

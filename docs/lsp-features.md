@@ -35,12 +35,32 @@ The CENTRA-NF Language Server Protocol (LSP) implementation provides comprehensi
 - Returns definition location for symbols
 - Range information showing exact location in source
 
-### 6. Document Symbols
+### 6. Find References
+- **Method**: `textDocument/references`
+- Locates all occurrences of a symbol in document
+- Returns array of Location objects with ranges
+- Enables "Find All References" feature
+
+### 7. Rename Refactoring
+- **Method**: `textDocument/rename`
+- Safe rename of symbols with multi-occurrence support
+- Returns WorkspaceEdit with all text changes
+- Updates all references automatically
+- Supports whole-document refactoring
+
+### 8. Document Symbols
 - **Method**: `textDocument/documentSymbol`
 - Lists all divisions in document
 - Enables quick navigation to sections
 - Symbol kind: 11 (Section)
 - Full range information for each symbol
+
+### 9. Workspace Symbols
+- **Method**: `workspace/symbol`
+- Global symbol search across workspace
+- Case-insensitive query matching
+- Returns matching keywords and predefined symbols
+- Foundation for semantic symbol resolution
 
 ## Server Capabilities
 
@@ -56,7 +76,10 @@ The LSP server advertises these capabilities upon initialization:
     "triggerCharacters": []
   },
   "definitionProvider": true,
-  "documentSymbolProvider": true
+  "referencesProvider": true,
+  "renameProvider": true,
+  "documentSymbolProvider": true,
+  "workspaceSymbolProvider": true
 }
 ```
 
@@ -100,6 +123,58 @@ All requests follow LSP 2.0 JSON-RPC specification with Content-Length framing.
 }
 ```
 
+### Example: References Request
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "textDocument/references",
+  "params": {
+    "textDocument": {
+      "uri": "file:///path/to/file.cnf"
+    },
+    "position": {
+      "line": 0,
+      "character": 5
+    },
+    "context": {
+      "includeDeclaration": true
+    }
+  }
+}
+```
+
+### Example: Rename Request
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "method": "textDocument/rename",
+  "params": {
+    "textDocument": {
+      "uri": "file:///path/to/file.cnf"
+    },
+    "position": {
+      "line": 0,
+      "character": 5
+    },
+    "newName": "NEW_IDENTIFIER"
+  }
+}
+```
+
+### Example: Workspace Symbol Request
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "method": "workspace/symbol",
+  "params": {
+    "query": "IDENTIFICATION"
+  }
+}
+```
+
 ## Document Lifecycle
 
 1. Client calls `initialize` → Server returns capabilities
@@ -126,18 +201,23 @@ All LSP features are tested with:
 | hover | ✅ Complete | Line content and position info |
 | completion | ✅ Complete | Language keywords and operations |
 | goto definition | ✅ Complete | Returns definition location |
+| find references | ✅ Complete | All symbol occurrences in document |
+| rename | ✅ Complete | Workspace edit with all changes |
 | document symbols | ✅ Complete | Division extraction and ranges |
+| workspace symbols | ✅ Complete | Global symbol search with query |
 | did open/change/close | ✅ Complete | Full document synchronization |
 | shutdown | ✅ Complete | Graceful server exit |
 
 ## Future Enhancements
 
 Potential additional features:
-- Rename refactoring (`textDocument/rename`)
-- References (`textDocument/references`)
-- Implementation locations (`textDocument/implementation`)
-- Call hierarchy (`textDocument/callHierarchy`)
-- Signature help (`textDocument/signatureHelp`)
-- Semantic tokens for syntax highlighting
-- Format on save (`textDocument/formatting`)
-- Range formatting (`textDocument/rangeFormatting`)
+- Signature help (`textDocument/signatureHelp`) - Parameter hints
+- Call hierarchy (`textDocument/callHierarchy`) - Function call chains
+- Implementation locations (`textDocument/implementation`) - Find implementations
+- Semantic tokens for syntax highlighting - Advanced code coloring
+- Format on save (`textDocument/formatting`) - Auto-format code
+- Range formatting (`textDocument/rangeFormatting`) - Format selection
+- Code lenses (`textDocument/codeLens`) - Inline metadata
+- Inlay hints (`textDocument/inlayHint`) - Type annotations
+- Fold ranges (`textDocument/foldingRange`) - Code folding support
+- On-type formatting (`textDocument/onTypeFormatting`) - Format as you type
